@@ -52,6 +52,27 @@ replace a founder's optimistic assumption with evidence from a real, specific cu
 The deep how-to for each theme lives in `references/`. Read the relevant theme file before
 guiding a step — do not work from this summary alone.
 
+## The DE lifecycle (recommended path)
+
+For an organized, gated way through the 24 steps — analogous to Spec Kit's `specify → clarify → plan
+→ tasks → implement` — drive the venture with the **lifecycle commands**:
+
+| Phase | Command | DE steps |
+|---|---|---|
+| Charter | `/de-charter` | 0 — idea, mission, team values |
+| Specify | `/de-specify` | 1–6 — who is your customer |
+| Clarify *(gate)* | `/de-clarify` | validate the beachhead via ~10 interviews |
+| Plan | `/de-plan` | 7–19 — value, position, model, economics |
+| Tasks | `/de-tasks` | 20–21 — assumptions + experiments |
+| Analyze *(gate)* | `/de-analyze` | red-team before building |
+| Implement | `/de-implement` | 22–24 — MVBP → traction → product plan |
+
+`/de-next` shows the current phase and the exact next command; `/validate-idea` auto-advances;
+`/venture-status` shows the full board. The engine (`scripts/status.py`) derives the phase from the
+dashboard and enforces two gates: **clarify before plan** (don't design for an unvalidated customer)
+and **analyze before implement** (don't build before de-risking). It's a cycle — loop back when
+evidence breaks an earlier phase. Full spec: `references/lifecycle.md`.
+
 ## How to run a validation
 
 1. **Scaffold (or locate) the venture workspace.** Each idea gets its own folder under
@@ -99,7 +120,8 @@ Deterministic helpers in `scripts/` (prefer them over re-deriving math by hand):
 - **`tam.py`** — bottoms-up TAM = (# end users) × (annual revenue per end user), with sensitivity.
 - **`unit_economics.py`** — LTV (NPV of profit, years 0–5), COCA, and the LTV:COCA ratio with a
   pass/fail against the 3:1 rule.
-- **`status.py <venture-dir>`** — print the 24-step completion dashboard and key metrics.
+- **`status.py <venture-dir> [--next]`** — the lifecycle engine: phase board, gates, 24-step
+  progress, key metrics, and the recommended next action (`--next` prints only the next command).
 
 Run `python3 <script> --help` for usage.
 
@@ -116,6 +138,7 @@ Run `python3 <script> --help` for usage.
 - `references/primary-market-research.md` — interview method, question bank, anti-patterns, synthesis.
 - `references/pitfalls.md` — the most common ways founders mislead themselves at each step.
 - `references/glossary.md` — DE vocabulary (DMU roles, MVBP, Core, beachhead, lighthouse customer…).
+- `references/lifecycle.md` — the phase-gated lifecycle (charter→specify→clarify→plan→tasks→analyze→implement) and how the engine drives it.
 
 ## Related skills
 

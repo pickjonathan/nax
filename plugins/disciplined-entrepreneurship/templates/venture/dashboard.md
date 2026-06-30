@@ -3,7 +3,13 @@
 Created: {{DATE}}
 
 Mark a step `[x]` only when it is **evidenced** (grounded in PMR / data), not merely attempted.
-Run the `/venture-status {{SLUG}}` command for a live view.
+Run `/de-next {{SLUG}}` for the next action, or `/venture-status {{SLUG}}` for the full board.
+
+## Lifecycle (Spec-Kit-style phases)
+- [ ] 0. Charter — idea, mission, team values  ·  `/de-charter`
+
+Phases: **charter → specify** (Theme 1) **→ clarify** (PMR gate) **→ plan** (Themes 2–4) **→ tasks**
+(Theme 5 assumptions) **→ implement** (MVBP → product plan). Details in `lifecycle.md`.
 
 ## Theme 1 — Who is your customer?
 - [ ] 1. Market Segmentation

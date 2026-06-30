@@ -43,6 +43,24 @@ nax/
 - **The venture template** is copied (by `new_venture.sh`) into the **user's** project at
   `./ventures/<slug>/`. Venture data is never stored inside the plugin.
 
+## The lifecycle
+
+The opinionated, Spec-Kit-style path through the 24 steps: **charter → specify → clarify → plan →
+tasks → analyze → implement**, exposed as the `de-*` commands and driven by the engine
+`scripts/status.py`.
+
+- The **engine** derives the current phase from the venture's `dashboard.md` step checkboxes
+  (step 0 = charter) and the `interviews/` count, enforces two **gates** — *clarify before plan*
+  (interview target ~10) and *analyze before implement* — and prints the next command
+  (`status.py <venture> --next`).
+- **Single source of truth is the dashboard.** Don't add a parallel state file. If you change the
+  phase↔step mapping, update *all* of: `status.py` (`PHASES`), the skill's
+  `references/lifecycle.md`, the venture template's `lifecycle.md`, and the README phase tables.
+- The phase grouping intentionally differs from the 6-theme grouping (Plan spans Themes 2–4) — that's
+  by design for a tighter command surface.
+- Lifecycle phase commands stay **thin**: they delegate to the focused tool commands, skills, and
+  agents, then advance the dashboard.
+
 ## Conventions you MUST follow when editing
 
 1. **Plugin spec.** Components auto-discover from `commands/`, `agents/`, `skills/` at the *plugin

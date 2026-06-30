@@ -1,22 +1,22 @@
 ---
-description: Validate a startup idea end-to-end with Disciplined Entrepreneurship
-argument-hint: [idea name or venture slug]
+description: Validate a startup idea end-to-end — drives the DE lifecycle
+argument-hint: [idea name or venture-slug]
 ---
 
-Use the **disciplined-entrepreneurship** skill to validate this idea: **$ARGUMENTS**
+Use the **disciplined-entrepreneurship** skill to validate **$ARGUMENTS** by driving the DE
+**lifecycle**: charter → specify → clarify → plan → tasks → analyze → implement.
 
-1. **Locate or create the workspace.** Check `ventures/` for an existing workspace matching this idea.
-   If found, read its `dashboard.md` and `00-summary.md` to learn where the founder already is. If
-   not, scaffold one:
-   `bash ${CLAUDE_PLUGIN_ROOT}/scripts/new_venture.sh "$ARGUMENTS"`
-2. **Meet them where they are.** Do not restart from Step 1 if earlier steps are already evidenced —
-   identify the next unfinished step from the dashboard.
-3. **Work the next step properly.** Read the matching `references/theme-N-*.md` for method. For
-   research-heavy steps, dispatch the relevant agents — `market-researcher`, `competitor-analyst`,
-   `tam-estimator`, `customer-discovery-analyst`, `business-model-architect` — and run independent
-   ones in parallel.
-4. **Record evidence.** Write findings into the right theme doc, route every assumption to
-   `assumptions.md`, and update `dashboard.md` and `00-summary.md`.
-5. **Be the disciplined, skeptical co-founder.** Evidence over opinion; one narrow beachhead; quantify
-   bottoms-up. End by naming the single riskiest assumption and the next concrete action. If the idea
-   is still raw, get the founder into customer conversations early.
+1. **Locate or create the venture.** If no workspace under `ventures/` matches, scaffold one:
+   `bash ${CLAUDE_PLUGIN_ROOT}/scripts/new_venture.sh "$ARGUMENTS"` (creates `./ventures/<slug>/`).
+2. **Find the current phase.** Run the lifecycle engine:
+   `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/status.py ventures/<slug> --next`
+3. **Run the recommended phase command** it points to — `/de-charter`, `/de-specify`, `/de-clarify`,
+   `/de-plan`, `/de-tasks`, `/de-analyze`, or `/de-implement` — and **honor the gates** (don't plan
+   before the clarify gate passes; don't build before `/de-analyze`).
+4. **Record evidence** in the right docs, route assumptions to `assumptions.md`, update `dashboard.md`
+   and `00-summary.md`, then re-check `--next` and continue to the next phase. It's a cycle — loop
+   back when an interview breaks an earlier assumption.
+5. **Be the disciplined, skeptical co-founder.** Evidence over opinion; one narrow beachhead;
+   quantify bottoms-up; never stop doing PMR.
+
+Use `/de-next` anytime to see the next action, or `/venture-status` for the full board.

@@ -12,6 +12,7 @@ validate an idea without fooling themselves.
 - [Install](#install)
 - [What you can do](#what-you-can-do)
 - [The framework](#the-framework-24-steps-6-themes)
+- [The lifecycle](#the-lifecycle-spec-kit-style)
 - [Usage](#usage)
 - [What's inside](#whats-inside)
 - [The venture workspace](#the-venture-workspace)
@@ -61,6 +62,28 @@ Then start validating — ventures are created in your **current project** under
 
 Five principles run through every step: **one beachhead, dominated · primary research over opinion ·
 quantify bottoms-up · capture value (not just create it) · evidence beats eloquence.**
+
+## The lifecycle (Spec-Kit-style)
+
+Like [Spec Kit](https://github.com/github/spec-kit)'s `specify → clarify → plan → tasks → implement`,
+this toolkit gives you a **phase-gated lifecycle** so you always know the next move. Run **`/de-next`**
+for the current phase + next command, **`/validate-idea`** to auto-advance, or **`/venture-status`**
+for the full board.
+
+| Phase | Command | DE steps | Spec Kit |
+|---|---|---|---|
+| Charter | `/de-charter` | 0 — idea, mission, team values | constitution |
+| Specify | `/de-specify` | 1–6 — who is your customer | specify |
+| Clarify *(gate)* | `/de-clarify` | validate beachhead via ~10 interviews | clarify |
+| Plan | `/de-plan` | 7–19 — value, position, model, economics | plan |
+| Tasks | `/de-tasks` | 20–21 — assumptions + experiments | tasks |
+| Analyze *(gate)* | `/de-analyze` | red-team before building | analyze |
+| Implement | `/de-implement` | 22–24 — MVBP → traction → product plan | implement |
+
+Two **gates** enforce the discipline that makes DE work: you can't *plan* before you've *talked to
+customers* (clarify), and you can't *build* before you've *de-risked* (analyze). It's a cycle — loop
+back whenever an interview breaks an earlier assumption. The engine (`scripts/status.py`) derives the
+phase from your dashboard and tells you exactly what to do next.
 
 ## Usage
 

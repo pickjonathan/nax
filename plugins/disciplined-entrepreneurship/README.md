@@ -33,6 +33,19 @@ automatically. Ventures are created in **your current project** under `./venture
 Five principles run through every step: **one beachhead dominated · primary research over opinion ·
 quantify bottoms-up · capture value (not just create it) · evidence beats eloquence.**
 
+## The lifecycle (Spec-Kit-style)
+
+Drive a venture through gated phases — analogous to Spec Kit's `specify → clarify → plan → tasks →
+implement`:
+
+`/de-charter` → `/de-specify` → `/de-clarify` *(gate)* → `/de-plan` → `/de-tasks` → `/de-analyze`
+*(gate)* → `/de-implement`
+
+Use **`/de-next`** to see the current phase + next command, **`/validate-idea`** to auto-advance, and
+**`/venture-status`** for the full board. The two gates enforce DE's discipline — talk to customers
+before planning, de-risk before building. The engine (`scripts/status.py`) derives the phase from the
+dashboard. Full spec: `skills/disciplined-entrepreneurship/references/lifecycle.md`.
+
 ## What's inside
 
 **Skills** (`skills/`, auto-trigger on natural language)
@@ -47,15 +60,17 @@ quantify bottoms-up · capture value (not just create it) · evidence beats eloq
   co-founder).
 
 **Commands** (`commands/`, slash entry points)
-- `/validate-idea` · `/de-step` · `/venture-status` · `/market-research` · `/size-market` ·
-  `/personas` · `/competition` · `/gtm` · `/business-model` · `/unit-economics` · `/pitch-deck` ·
-  `/red-team`
+- **Lifecycle** (the gated path): `/de-charter` · `/de-specify` · `/de-clarify` · `/de-plan` ·
+  `/de-tasks` · `/de-analyze` · `/de-implement` · `/de-next`.
+- **Tools** (à la carte): `/validate-idea` · `/de-step` · `/venture-status` · `/market-research` ·
+  `/size-market` · `/personas` · `/competition` · `/gtm` · `/business-model` · `/unit-economics` ·
+  `/pitch-deck` · `/red-team`.
 
 **Scripts** (`scripts/`, invoked by the commands via `${CLAUDE_PLUGIN_ROOT}`)
 - `new_venture.sh "Name"` — scaffold a venture workspace into `./ventures` in your project.
 - `tam.py` — bottoms-up TAM with sensitivity.
 - `unit_economics.py` — LTV, COCA, and the LTV:COCA ratio (vs the 3:1 rule).
-- `status.py <venture>` — 24-step progress dashboard + key metrics.
+- `status.py <venture> [--next]` — lifecycle engine: phase board, gates, 24-step progress, metrics, next action.
 
 **Venture template** (`templates/venture/`) — copied into your project per idea: a living workbook
 with a doc per theme, a dashboard, an assumptions register, unit-economics workings, a pitch-deck
