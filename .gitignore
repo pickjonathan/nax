@@ -1,0 +1,15 @@
+# Per-venture working data — created by users in THEIR projects, never committed to the marketplace.
+# (The blank template lives in plugins/disciplined-entrepreneurship/templates/venture/ and IS tracked.)
+/ventures/
+
+# Python
+__pycache__/
+*.py[cod]
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+*.swp
+*~
+.idea/
+.vscode/

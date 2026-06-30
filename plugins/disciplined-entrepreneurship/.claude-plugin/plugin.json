@@ -1,0 +1,22 @@
+{
+  "name": "disciplined-entrepreneurship",
+  "version": "1.0.0",
+  "description": "Validate tech startup ideas end-to-end with Bill Aulet's Disciplined Entrepreneurship — the 24 steps across 6 themes — plus market research, competitive analysis, go-to-market, unit economics, and pitch-deck tooling. Includes 5 skills, 7 agents, 12 commands, helper scripts, and a per-venture workspace.",
+  "author": {
+    "name": "pickjonathan"
+  },
+  "keywords": [
+    "startup",
+    "entrepreneurship",
+    "disciplined-entrepreneurship",
+    "idea-validation",
+    "product-market-fit",
+    "market-research",
+    "competitive-analysis",
+    "go-to-market",
+    "unit-economics",
+    "pitch-deck",
+    "tam",
+    "founder"
+  ]
+}

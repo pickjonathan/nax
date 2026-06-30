@@ -1,0 +1,20 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "nax",
+  "description": "Founder's idea-validation toolkit: validate tech startup ideas end-to-end with Bill Aulet's Disciplined Entrepreneurship, market research, competitive analysis, go-to-market, and pitch-deck tooling.",
+  "owner": {
+    "name": "pickjonathan",
+    "email": "pickjonathan@esh.com"
+  },
+  "plugins": [
+    {
+      "name": "disciplined-entrepreneurship",
+      "description": "Validate a tech startup idea end-to-end with Bill Aulet's Disciplined Entrepreneurship (24 steps / 6 themes) plus market research, competitive analysis, go-to-market, unit economics, and pitch-deck tooling. Ships 5 skills, 7 agents, 12 commands, scripts, and a per-venture workspace template.",
+      "author": {
+        "name": "pickjonathan"
+      },
+      "category": "productivity",
+      "source": "./plugins/disciplined-entrepreneurship"
+    }
+  ]
+}
