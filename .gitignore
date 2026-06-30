@@ -6,6 +6,12 @@
 __pycache__/
 *.py[cod]
 
+# Python build artifacts
+/dist/
+/build/
+*.egg-info/
+.venv/
+
 # OS / editor cruft
 .DS_Store
 Thumbs.db

@@ -5,8 +5,11 @@ investor-ready** business using Bill Aulet's **Disciplined Entrepreneurship (DE)
 Steps across 6 themes), surrounded by the market-research, competitive-analysis, go-to-market, and
 pitch-deck toolkit a founder actually needs.
 
-This plugin ships **5 skills**, **7 agents**, **12 commands**, helper **scripts**, and a per-idea
-**venture workspace** template.
+This plugin ships **5 skills**, **7 agents**, **20 commands** (8 lifecycle + 12 tools), helper
+**scripts**, and a per-idea **venture workspace** template.
+
+Two ways to install: the **plugin** (this marketplace), or **vendored into a project's `.claude/`** via
+the `nax` CLI (`uvx --from git+https://github.com/pickjonathan/nax nax init`) — use one per project.
 
 ## Quick start (after installing the plugin)
 

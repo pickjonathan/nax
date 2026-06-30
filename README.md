@@ -10,6 +10,7 @@ commands**, helper scripts, and a per-idea **venture workspace** — everything 
 validate an idea without fooling themselves.
 
 - [Install](#install)
+- [Install into your project](#install-into-your-project-spec-kit-style)
 - [What you can do](#what-you-can-do)
 - [The framework](#the-framework-24-steps-6-themes)
 - [The lifecycle](#the-lifecycle-spec-kit-style)
@@ -38,6 +39,31 @@ Then start validating — ventures are created in your **current project** under
 ```
 /validate-idea My Idea Name
 ```
+
+## Install into your project (Spec-Kit-style)
+
+Prefer the files **version-controlled and editable inside your own repo** (like
+[Spec Kit](https://github.com/github/spec-kit))? Use the `nax` CLI instead of the plugin — it asks a
+few questions and vendors the toolkit straight into your project's `.claude/`:
+
+```bash
+uvx --from git+https://github.com/pickjonathan/nax nax init
+```
+
+It prompts for the target directory, what to install, helper scripts, and an optional first venture,
+then writes `.claude/{commands,agents,skills}` plus `.claude/de/{scripts,templates}`. Non-interactive:
+
+```bash
+uvx --from git+https://github.com/pickjonathan/nax nax init . --here --force --yes
+```
+
+**Two distribution models — pick one per project:**
+- **Plugin** (above) — shared across all your projects, updated via `/plugin update`; nothing is
+  copied into your repo.
+- **Vendored** (`nax init`) — files live in *this* project's `.claude/`, committed and editable, no
+  plugin required. Don't use both in the same project, or commands will duplicate.
+
+All flags are in [`nax_cli/README.md`](nax_cli/README.md).
 
 ## What you can do
 

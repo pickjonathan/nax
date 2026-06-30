@@ -1,0 +1,35 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "nax-cli"
+dynamic = ["version"]
+description = "Spec-Kit-style installer that vendors the Disciplined Entrepreneurship toolkit into a project's .claude/ folder."
+readme = "nax_cli/README.md"
+requires-python = ">=3.9"
+authors = [{ name = "pickjonathan" }]
+keywords = ["disciplined-entrepreneurship", "claude-code", "startup", "scaffold", "spec-kit"]
+
+[project.scripts]
+nax = "nax_cli.__main__:main"
+
+[project.urls]
+Homepage = "https://github.com/pickjonathan/nax"
+Repository = "https://github.com/pickjonathan/nax"
+
+[tool.hatch.version]
+path = "nax_cli/__init__.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["nax_cli"]
+
+# Bundle the canonical plugin component tree into the wheel as nax_cli/payload/ at build time.
+# This avoids duplicating the component files in the repo while making `uvx`/installed runs
+# self-contained. (Running from a clone falls back to ./plugins/disciplined-entrepreneurship/.)
+[tool.hatch.build.targets.wheel.force-include]
+"plugins/disciplined-entrepreneurship/commands" = "nax_cli/payload/commands"
+"plugins/disciplined-entrepreneurship/agents" = "nax_cli/payload/agents"
+"plugins/disciplined-entrepreneurship/skills" = "nax_cli/payload/skills"
+"plugins/disciplined-entrepreneurship/scripts" = "nax_cli/payload/scripts"
+"plugins/disciplined-entrepreneurship/templates" = "nax_cli/payload/templates"

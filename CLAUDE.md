@@ -61,6 +61,23 @@ tasks → analyze → implement**, exposed as the `de-*` commands and driven by 
 - Lifecycle phase commands stay **thin**: they delegate to the focused tool commands, skills, and
   agents, then advance the dashboard.
 
+## Distribution models & the `nax` CLI
+
+The toolkit ships two ways:
+1. **Plugin** (`plugins/disciplined-entrepreneurship/`, installed via `/plugin`). Components use
+   `${CLAUDE_PLUGIN_ROOT}` for script paths. **This is the canonical source of the components.**
+2. **Vendored** via the `nax` CLI (`nax_cli/`): `uvx --from git+…/nax nax init` copies the components
+   into a project's `.claude/` (+ `.claude/de/{scripts,templates}`) for people who want them in their
+   own repo — no plugin needed.
+
+**Invariant to preserve:** components are authored *once*, for the plugin, using
+`${CLAUDE_PLUGIN_ROOT}/…`. The CLI's single transform rewrites `${CLAUDE_PLUGIN_ROOT}/` →
+`.claude/de/` in vendored `.md`/`.sh`/`.py` files. Therefore: keep using `${CLAUDE_PLUGIN_ROOT}` in
+plugin components (never hardcode `.claude/de/`), and **do not duplicate component files into
+`nax_cli/`** — they are bundled into the wheel at build time via hatchling `force-include`
+(`pyproject.toml`), and the CLI falls back to `plugins/disciplined-entrepreneurship/` when run from a
+clone.
+
 ## Conventions you MUST follow when editing
 
 1. **Plugin spec.** Components auto-discover from `commands/`, `agents/`, `skills/` at the *plugin
