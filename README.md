@@ -70,6 +70,18 @@ It also targets **Cursor** and **Codex** — `nax init` asks which, or pass `--a
 
 All flags are in [`nax_cli/README.md`](nax_cli/README.md).
 
+### Using it in each assistant
+
+| Assistant | Invoke a command | Skills | Agents |
+|---|---|---|---|
+| **Claude Code** | `/de-next` | auto-trigger | auto-dispatched subagents |
+| **Cursor** | `/de-next` (type your input after it) | auto-trigger (`.cursor/skills`) | `/agent-name` or auto |
+| **Codex** | `$de-next` | auto-trigger (`.agents/skills`) | invoked as skills |
+
+Notes: Cursor commands don't interpolate Claude's `$ARGUMENTS` or run inline `` !`bash` `` — just type
+your request after the command and it's appended. Codex invokes skills with `$name` (not `/name`), and
+the generated `AGENTS.md` documents the lifecycle and layout.
+
 ## What you can do
 
 - **Validate an idea end-to-end** against the 24 steps, with the workspace tracking your progress.
