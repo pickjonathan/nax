@@ -1,12 +1,14 @@
-# nax — Disciplined Entrepreneurship for Claude Code
+# nax — Disciplined Entrepreneurship for Claude Code, Cursor & Codex
+
+[![CI](https://github.com/pickjonathan/nax/actions/workflows/ci.yml/badge.svg)](https://github.com/pickjonathan/nax/actions/workflows/ci.yml)
 
 > A Claude Code **plugin marketplace** that turns a raw tech idea into a **falsifiable,
 > customer-grounded, investor-ready** business — using Bill Aulet's **Disciplined
 > Entrepreneurship** (24 steps / 6 themes) plus market-research, competitive-analysis,
 > go-to-market, unit-economics, and pitch-deck tooling.
 
-It hosts one plugin, **`disciplined-entrepreneurship`**, that ships **5 skills, 7 agents, 12
-commands**, helper scripts, and a per-idea **venture workspace** — everything a founder needs to
+It hosts one plugin, **`disciplined-entrepreneurship`**, that ships **5 skills, 7 agents, 20
+commands** (8 lifecycle + 12 tools), helper scripts, and a per-idea **venture workspace** — everything a founder needs to
 validate an idea without fooling themselves.
 
 - [Install](#install)
@@ -155,8 +157,8 @@ them → `/personas` → `/size-market` → `/competition` → `/business-model`
 ## What's inside
 
 **Skills** (`skills/`, auto-trigger on natural language)
-- **`disciplined-entrepreneurship`** — the spine: orchestrates the 24 steps; 11 references
-  (per-theme guides, exact TAM/LTV/COCA formulas, the PMR method, pitfalls, glossary).
+- **`disciplined-entrepreneurship`** — the spine: orchestrates the 24 steps; 12 references
+  (per-theme guides, exact TAM/LTV/COCA formulas, the PMR method, the lifecycle, pitfalls, glossary).
 - **`market-research`**, **`competitive-analysis`**, **`go-to-market`**, **`pitch-deck`** — focused
   skills, each with its own reference docs.
 
@@ -164,7 +166,7 @@ them → `/personas` → `/size-market` → `/competition` → `/business-model`
 - `market-researcher` · `competitor-analyst` · `customer-discovery-analyst` · `tam-estimator` ·
   `business-model-architect` · `pitch-deck-architect` · `assumption-red-teamer`.
 
-**Commands** (`commands/`) — the 12 slash commands above.
+**Commands** (`commands/`) — **20** total: 8 **lifecycle** commands (see [The lifecycle](#the-lifecycle-spec-kit-style)) + 12 **tool** commands (see [Usage](#usage)).
 
 **Scripts** (`scripts/`, invoked via `${CLAUDE_PLUGIN_ROOT}`)
 - `new_venture.sh` (scaffold) · `tam.py` · `unit_economics.py` · `status.py`.
@@ -195,9 +197,12 @@ Every claim should trace to a customer conversation, a cited source, or a labell
 nax/
 ├── .claude-plugin/marketplace.json            # marketplace manifest
 ├── README.md · CLAUDE.md
+├── pyproject.toml                             # nax-cli package (hatchling; bundles the payload)
+├── nax_cli/                                   # the `nax` installer CLI (__main__.py · installer.py)
+├── .github/workflows/ci.yml                   # CI: manifests + installs for all 3 targets + wheel
 └── plugins/disciplined-entrepreneurship/
     ├── .claude-plugin/plugin.json             # plugin manifest
-    ├── commands/ · agents/ · skills/          # auto-discovered components
+    ├── commands/ · agents/ · skills/          # auto-discovered components (20 · 7 · 5)
     ├── scripts/                               # helper scripts (${CLAUDE_PLUGIN_ROOT})
     ├── templates/venture/                     # per-venture workspace template
     └── README.md
@@ -217,13 +222,21 @@ python3 -m json.tool plugins/disciplined-entrepreneurship/.claude-plugin/plugin.
 
 # Exercise the scripts
 python3 plugins/disciplined-entrepreneurship/scripts/tam.py --users 1500 --revenue 9000
-python3 plugins/disciplined-entrepreneurship/scripts/unit_economics.py --monthly 20 \
-  --gross-margin 0.9 --retention 0.8 --cost-of-capital 0.5 --coca 60
+
+# Run the installer into a throwaway dir, for any target (claude | cursor | codex)
+python3 -m nax_cli init /tmp/demo --ai cursor --force --yes
+
+# Build the wheel (bundles nax_cli/payload/) and confirm
+uv build && unzip -l dist/*.whl | grep nax_cli/payload/commands/
 
 # Test the plugin locally without publishing:
 #   /plugin marketplace add /absolute/path/to/nax
 #   /plugin install disciplined-entrepreneurship@nax
 ```
+
+Every push runs **CI** (`.github/workflows/ci.yml`): manifest validation, script smoke tests, an
+install into **each** `--ai` target with a no-`${CLAUDE_PLUGIN_ROOT}`-leak assertion, a venture
+scaffold + lifecycle run, and the wheel/payload check.
 
 ## Publishing
 
@@ -231,6 +244,8 @@ python3 plugins/disciplined-entrepreneurship/scripts/unit_economics.py --monthly
 2. Optionally set `repository`, `homepage`, `author`, and `license` in the two manifests.
 3. Share `/plugin marketplace add pickjonathan/nax` — anyone can then
    `/plugin install disciplined-entrepreneurship@nax`.
+4. Tag releases (e.g. `v1.1.0`) so the `nax` CLI can be pinned:
+   `uvx --from git+https://github.com/pickjonathan/nax@v1.1.0 nax init`.
 
 ## Attribution & caveats
 

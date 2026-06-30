@@ -52,8 +52,8 @@ dashboard. Full spec: `skills/disciplined-entrepreneurship/references/lifecycle.
 ## What's inside
 
 **Skills** (`skills/`, auto-trigger on natural language)
-- `disciplined-entrepreneurship` — the spine: orchestrates the 24 steps; 11 reference docs
-  (per-theme guides, exact TAM/LTV/COCA formulas, the PMR method, pitfalls, glossary).
+- `disciplined-entrepreneurship` — the spine: orchestrates the 24 steps; 12 reference docs
+  (per-theme guides, exact TAM/LTV/COCA formulas, the PMR method, the lifecycle, pitfalls, glossary).
 - `market-research` · `competitive-analysis` · `go-to-market` · `pitch-deck` — each with its own
   references.
 

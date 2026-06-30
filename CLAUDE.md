@@ -11,22 +11,27 @@ framework (24 steps across 6 themes) plus market-research, competitive-analysis,
 unit-economics, and pitch-deck tooling.
 
 Two audiences, two surfaces:
-- **End users** install the plugin and run it in *their own* projects to validate startup ideas.
-- **Contributors** (you, here) maintain the marketplace + plugin in *this* repo.
+- **End users** either install the plugin (`/plugin`) or vendor the toolkit into their project with the
+  `nax` CLI (Claude / Cursor / Codex), then validate ideas in *their own* projects.
+- **Contributors** (you, here) maintain the marketplace, the plugin, and the `nax` CLI in *this* repo.
 
 ## Repository layout
 
 ```
 nax/
 ├── .claude-plugin/marketplace.json            # marketplace manifest (lists the plugin)
-├── README.md                                  # repo front page (install + overview)
-├── CLAUDE.md                                   # this file
+├── README.md · CLAUDE.md                       # front page · this file
+├── pyproject.toml                              # nax-cli package (hatchling; force-includes the payload)
+├── nax_cli/                                    # the `nax` installer CLI
+│   ├── __main__.py                             #   argparse + interactive prompts
+│   └── installer.py                            #   per-target copy/transform (_copy_claude/cursor/codex)
+├── .github/workflows/ci.yml                    # CI: manifests + installs for all 3 targets + wheel
 └── plugins/disciplined-entrepreneurship/
     ├── .claude-plugin/plugin.json             # plugin manifest
     ├── README.md                              # plugin documentation
-    ├── commands/   (12 .md)                   # slash-command entry points
+    ├── commands/   (20 .md)                   # 8 lifecycle (de-*) + 12 tool commands
     ├── agents/     (7 .md)                     # autonomous subagents
-    ├── skills/     (5 dirs)                    # methodology; the DE skill holds 11 references/
+    ├── skills/     (5 dirs)                    # methodology; the DE skill holds 12 references/
     ├── scripts/    (4)                         # tam.py · unit_economics.py · status.py · new_venture.sh
     └── templates/venture/                      # per-venture workspace template (copied into user projects)
 ```
@@ -113,7 +118,10 @@ plugin components (never hardcode a vendored path), and **do not duplicate compo
 - **New command:** `plugins/disciplined-entrepreneurship/commands/<name>.md`.
 - **New script:** `plugins/disciplined-entrepreneurship/scripts/<name>`; invoke as
   `${CLAUDE_PLUGIN_ROOT}/scripts/<name>`; make it executable.
-- After any change, keep `README.md` and the plugin `README.md` component lists accurate.
+- After any change, keep the counts in `README.md`, the plugin `README.md`, and this file accurate.
+- New commands/agents/skills are picked up automatically by **both** the plugin and the `nax`
+  installer (it copies the payload dirs) — no `nax_cli` change is needed unless you add a new install
+  *target* or a new component *type*.
 
 ## Testing
 
@@ -124,15 +132,19 @@ python3 -m json.tool plugins/disciplined-entrepreneurship/.claude-plugin/plugin.
 
 # Exercise the scripts
 python3 plugins/disciplined-entrepreneurship/scripts/tam.py --users 1500 --revenue 9000
-python3 plugins/disciplined-entrepreneurship/scripts/unit_economics.py --monthly 20 \
-  --gross-margin 0.9 --retention 0.8 --cost-of-capital 0.5 --coca 60
 
-# Scaffold test (run from a throwaway dir so ventures land there, not in this repo)
-( cd "$(mktemp -d)" && bash /abs/path/to/plugins/disciplined-entrepreneurship/scripts/new_venture.sh "Test Idea" )
+# Run the installer into a throwaway dir for any target (claude | cursor | codex)
+python3 -m nax_cli init "$(mktemp -d)" --ai cursor --force --yes
 
-# Install locally to test discovery:  /plugin marketplace add <abs path>  then
-#                                      /plugin install disciplined-entrepreneurship@nax
+# Build the wheel and confirm the payload is bundled
+uv build && unzip -l dist/*.whl | grep nax_cli/payload/commands/
+
+# Plugin discovery without publishing:  /plugin marketplace add <abs path>  then
+#                                        /plugin install disciplined-entrepreneurship@nax
 ```
+
+All of the above runs in **CI** (`.github/workflows/ci.yml`) on every push — including a
+no-`${CLAUDE_PLUGIN_ROOT}`-leak assertion for each `--ai` target and a wheel/payload check.
 
 ## Key framework facts (get these right)
 
