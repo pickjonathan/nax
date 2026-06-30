@@ -244,8 +244,8 @@ scaffold + lifecycle run, and the wheel/payload check.
 2. Optionally set `repository`, `homepage`, `author`, and `license` in the two manifests.
 3. Share `/plugin marketplace add pickjonathan/nax` — anyone can then
    `/plugin install disciplined-entrepreneurship@nax`.
-4. Tag releases (e.g. `v1.1.0`) so the `nax` CLI can be pinned:
-   `uvx --from git+https://github.com/pickjonathan/nax@v1.1.0 nax init`.
+4. Tag releases (e.g. `v1.2.0`) so the `nax` CLI can be pinned:
+   `uvx --from git+https://github.com/pickjonathan/nax@v1.2.0 nax init`.
 
 ## Attribution & caveats
 
