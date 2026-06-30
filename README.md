@@ -57,6 +57,11 @@ then writes `.claude/{commands,agents,skills}` plus `.claude/de/{scripts,templat
 uvx --from git+https://github.com/pickjonathan/nax nax init . --here --force --yes
 ```
 
+It also targets **Cursor** and **Codex** — `nax init` asks which, or pass `--ai`:
+`--ai claude` → `.claude/{commands,agents,skills}` · `--ai cursor` → `.cursor/{commands,skills,agents}` ·
+`--ai codex` → `.agents/skills/` (commands & agents become Codex skills) + `AGENTS.md`. Each also gets
+`<root>/de/{scripts,templates}`.
+
 **Two distribution models — pick one per project:**
 - **Plugin** (above) — shared across all your projects, updated via `/plugin update`; nothing is
   copied into your repo.

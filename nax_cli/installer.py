@@ -1,8 +1,14 @@
-"""Vendor the Disciplined Entrepreneurship toolkit into a project's `.claude/` folder.
+"""Vendor the Disciplined Entrepreneurship toolkit into a project for a chosen AI assistant.
 
-Distribution model #2 (alongside the Claude Code plugin): copy the components into a project's
-`.claude/` so they are version-controlled and editable in that repo. Because `${CLAUDE_PLUGIN_ROOT}`
-only exists for installed plugins, vendored `.md` files have it rewritten to a project-local path.
+Targets (`--ai`):
+  claude  -> .claude/{commands,agents,skills} + .claude/de/{scripts,templates}
+  cursor  -> .cursor/{commands,agents,skills} + .cursor/de/{scripts,templates}
+  codex   -> .agents/skills/<all-as-skills> + AGENTS.md + .agents/de/{scripts,templates}
+
+Components are authored once for the Claude Code plugin using `${CLAUDE_PLUGIN_ROOT}/…`; each target
+rewrites that token to its own vendored path. Codex has no project-local commands, so commands and
+agents are converted into the Codex/agentskills SKILL.md format. Nothing is ever deleted — files
+merge into the project and existing ones are skipped unless `force`.
 """
 from __future__ import annotations
 
@@ -14,14 +20,13 @@ import subprocess
 import sys
 from pathlib import Path
 
-# In the plugin, scripts are referenced as ${CLAUDE_PLUGIN_ROOT}/scripts/...; vendored, they live
-# under .claude/de/. Rewriting this token is the single transform that makes the vendored copy work.
 PLUGIN_ROOT_TOKEN = "${CLAUDE_PLUGIN_ROOT}/"
-VENDOR_PREFIX = ".claude/de/"
+TEXT_SUFFIXES = (".md", ".sh", ".py")
 
 
+# --------------------------------------------------------------------------- payload
 def payload_root() -> Path:
-    """Locate the component source: the bundled wheel payload, else the repo source (clone runs)."""
+    """Locate the component source: bundled wheel payload, else repo-relative (clone runs)."""
     try:
         from importlib.resources import files
 
@@ -30,41 +35,84 @@ def payload_root() -> Path:
             return bundled
     except Exception:
         pass
-    repo = Path(__file__).resolve().parent.parent
-    src = repo / "plugins" / "disciplined-entrepreneurship"
+    src = Path(__file__).resolve().parent.parent / "plugins" / "disciplined-entrepreneurship"
     if (src / "commands").is_dir():
         return src
     raise SystemExit(
-        "error: could not locate the DE component payload (neither bundled in the package nor "
-        "repo-relative). Reinstall the CLI or run it from a clone of the repository."
+        "error: could not locate the DE component payload (neither bundled nor repo-relative). "
+        "Reinstall the CLI or run it from a clone of the repository."
     )
 
 
-def _write_file(src: Path, dst: Path, transform: bool) -> None:
+# --------------------------------------------------------------------------- text helpers
+def _transform(text: str, prefix: str) -> str:
+    return text.replace(PLUGIN_ROOT_TOKEN, prefix)
+
+
+def _parse_frontmatter(fm: str) -> dict:
+    """Minimal YAML frontmatter reader: `key: value` and folded block scalars (`>-`, `|`). Enough
+    to recover `name`/`description` — avoids a PyYAML dependency so the CLI stays stdlib-only."""
+    meta: dict = {}
+    lines = fm.split("\n")
+    i = 0
+    while i < len(lines):
+        line = lines[i]
+        if not line.strip() or line.lstrip().startswith("#") or line.startswith((" ", "\t")):
+            i += 1
+            continue
+        if ":" in line:
+            key, _, val = line.partition(":")
+            key, val = key.strip(), val.strip()
+            if val in (">", ">-", "|", "|-"):
+                block, i = [], i + 1
+                while i < len(lines) and (lines[i].startswith(("  ", "\t")) or not lines[i].strip()):
+                    if lines[i].strip():
+                        block.append(lines[i].strip())
+                    i += 1
+                meta[key] = " ".join(block)
+                continue
+            meta[key] = val.strip().strip('"').strip("'")
+        i += 1
+    return meta
+
+
+def _split_frontmatter(text: str):
+    if text.startswith("---\n"):
+        end = text.find("\n---\n", 4)
+        if end != -1:
+            return _parse_frontmatter(text[4:end]), text[end + 5:]
+    return {}, text
+
+
+# --------------------------------------------------------------------------- fs helpers
+def _emit(dst: Path, text: str, installed: list, force: bool) -> int:
+    if dst.exists() and not force:
+        return 0
     dst.parent.mkdir(parents=True, exist_ok=True)
-    if transform and src.suffix in (".md", ".sh", ".py"):
-        text = src.read_text(encoding="utf-8").replace(PLUGIN_ROOT_TOKEN, VENDOR_PREFIX)
-        dst.write_text(text, encoding="utf-8")
-    else:
-        shutil.copy2(src, dst)
+    dst.write_text(text, encoding="utf-8")
+    installed.append(str(dst))
+    return 1
 
 
-def _copy_tree(src: Path, dst: Path, *, transform: bool, force: bool, installed: list) -> int:
-    """Recursively copy src→dst, merging into any existing files. Skips existing unless `force`.
-
-    Never deletes anything — vendored files merge into the user's existing `.claude/`.
-    """
-    count = 0
-    for root, _dirs, fnames in os.walk(src):
+def _copy_dir(src: Path, dst: Path, prefix: str, installed: list, force: bool) -> int:
+    """Copy a tree, rewriting the plugin-root token in text files. Skips existing unless force."""
+    n = 0
+    if not src.is_dir():
+        return 0
+    for root, _dirs, files in os.walk(src):
         rel = Path(root).relative_to(src)
-        for name in fnames:
-            d = dst / rel / name
+        for name in files:
+            s, d = Path(root) / name, dst / rel / name
             if d.exists() and not force:
                 continue
-            _write_file(Path(root) / name, d, transform)
+            d.parent.mkdir(parents=True, exist_ok=True)
+            if s.suffix in TEXT_SUFFIXES:
+                d.write_text(_transform(s.read_text(encoding="utf-8"), prefix), encoding="utf-8")
+            else:
+                shutil.copy2(s, d)
             installed.append(str(d))
-            count += 1
-    return count
+            n += 1
+    return n
 
 
 def _make_executable(path: Path) -> None:
@@ -76,7 +124,6 @@ def _make_executable(path: Path) -> None:
 
 
 def ensure_gitignore(target: Path) -> bool:
-    """Append `/ventures/` to the project .gitignore if absent. Returns True if it added the line."""
     gi = target / ".gitignore"
     line = "/ventures/"
     existing = gi.read_text(encoding="utf-8") if gi.exists() else ""
@@ -91,7 +138,6 @@ def ensure_gitignore(target: Path) -> bool:
 
 
 def plugin_installed() -> bool:
-    """Best-effort: is the disciplined-entrepreneurship plugin installed for this user?"""
     try:
         base = Path.home() / ".claude" / "plugins"
         if not base.is_dir():
@@ -108,40 +154,151 @@ def plugin_installed() -> bool:
     return False
 
 
-def install(*, target: Path, components: str = "full", with_scripts: bool = True,
+# --------------------------------------------------------------------------- per-target copy
+def _copy_claude_like(payload, root_dir, prefix, components, force, installed):
+    """Shared by claude and cursor: native commands/skills/agents dirs."""
+    counts = {}
+    counts["commands"] = _copy_dir(payload / "commands", root_dir / "commands", prefix, installed, force)
+    counts["skills"] = sum(1 for d in (payload / "skills").iterdir() if d.is_dir())
+    _copy_dir(payload / "skills", root_dir / "skills", prefix, installed, force)
+    if components != "no-agents":
+        counts["agents"] = _copy_dir(payload / "agents", root_dir / "agents", prefix, installed, force)
+    return counts
+
+
+def _copy_claude(payload, target, components, with_scripts, force, installed):
+    prefix = ".claude/de/"
+    counts = _copy_claude_like(payload, target / ".claude", prefix, components, force, installed)
+    return {"root": ".claude", "de_dir": target / ".claude" / "de", "prefix": prefix,
+            "counts": counts, "invoke": "/", "extra": []}
+
+
+def _copy_cursor(payload, target, components, with_scripts, force, installed):
+    prefix = ".cursor/de/"
+    cur = target / ".cursor"
+    counts = {}
+    # Cursor commands are plain markdown (no frontmatter); strip the YAML block.
+    n = 0
+    for f in sorted((payload / "commands").glob("*.md")):
+        _, body = _split_frontmatter(f.read_text(encoding="utf-8"))
+        n += _emit(cur / "commands" / f.name, _transform(body.lstrip("\n"), prefix), installed, force)
+    counts["commands"] = n
+    counts["skills"] = sum(1 for d in (payload / "skills").iterdir() if d.is_dir())
+    _copy_dir(payload / "skills", cur / "skills", prefix, installed, force)
+    if components != "no-agents":
+        counts["agents"] = _copy_dir(payload / "agents", cur / "agents", prefix, installed, force)
+    return {"root": ".cursor", "de_dir": cur / "de", "prefix": prefix,
+            "counts": counts, "invoke": "/", "extra": []}
+
+
+def _to_skill(name, description, body, prefix, skills_root, installed, force) -> int:
+    """Write a SKILL.md (Codex/agentskills format) unless that skill folder already exists."""
+    dst = skills_root / name / "SKILL.md"
+    if dst.parent.exists() and not force:
+        return 0
+    desc = description or name
+    text = (f"---\nname: {name}\ndescription: {json.dumps(desc, ensure_ascii=False)}\n---\n\n"
+            f"{_transform(body.lstrip(chr(10)), prefix)}")
+    return _emit(dst, text, installed, force)
+
+
+def _copy_codex(payload, target, components, with_scripts, force, installed):
+    prefix = ".agents/de/"
+    skills_root = target / ".agents" / "skills"
+    counts = {"skills": 0, "commands": 0, "agents": 0}
+    # 1) Real skills first; they own their names (a same-named command never overwrites a skill).
+    real_names = set()
+    for d in sorted((payload / "skills").iterdir()):
+        if d.is_dir():
+            _copy_dir(d, skills_root / d.name, prefix, installed, force)
+            counts["skills"] += 1
+            real_names.add(d.name)
+    # 2) Commands -> skills (skip names already taken by a real skill, e.g. market-research, pitch-deck).
+    for f in sorted((payload / "commands").glob("*.md")):
+        if f.stem in real_names:
+            continue
+        meta, body = _split_frontmatter(f.read_text(encoding="utf-8"))
+        counts["commands"] += _to_skill(f.stem, meta.get("description", ""), body, prefix,
+                                        skills_root, installed, force)
+    # 3) Agents -> skills.
+    if components != "no-agents":
+        for f in sorted((payload / "agents").glob("*.md")):
+            meta, body = _split_frontmatter(f.read_text(encoding="utf-8"))
+            counts["agents"] += _to_skill(meta.get("name", f.stem), meta.get("description", ""), body,
+                                          prefix, skills_root, installed, force)
+    extra = []
+    if _write_agents_md(target, force, installed):
+        extra.append("wrote AGENTS.md")
+    return {"root": ".agents", "de_dir": target / ".agents" / "de", "prefix": prefix,
+            "counts": counts, "invoke": "$", "extra": extra}
+
+
+AGENTS_MD_BLOCK = """<!-- nax:disciplined-entrepreneurship:start -->
+# Disciplined Entrepreneurship toolkit
+
+This project includes the Disciplined Entrepreneurship (DE) founder-validation toolkit, installed as
+Codex **skills** under `.agents/skills/` — invoke one with `$<name>` (e.g. `$de-next`), or just
+describe your idea and the skills auto-trigger by description. Helper scripts live in
+`.agents/de/scripts/`; the per-venture workbook template in `.agents/de/templates/`. Your validation
+work for each idea lives in `./ventures/<slug>/`.
+
+**Lifecycle:** `$de-charter` -> `$de-next` (it tells you the next step) -> `$de-specify` ->
+`$de-clarify` -> `$de-plan` -> `$de-tasks` -> `$de-analyze` -> `$de-implement`. Scaffold from the
+shell with `bash .agents/de/scripts/new_venture.sh "My Idea"`.
+
+**Principles (Bill Aulet):** one beachhead dominated; primary research over opinion (inquiry, not
+advocacy); quantify bottoms-up (TAM, LTV, COCA); capture value, don't just create it; evidence beats
+eloquence ("the dogs must eat the dog food").
+
+*(Generated by nax-cli; deep methodology lives in each skill's SKILL.md and references/.)*
+<!-- nax:disciplined-entrepreneurship:end -->"""
+
+
+def _write_agents_md(target: Path, force: bool, installed: list) -> bool:
+    path = target / "AGENTS.md"
+    start, end = "<!-- nax:disciplined-entrepreneurship:start -->", \
+        "<!-- nax:disciplined-entrepreneurship:end -->"
+    if not path.exists():
+        path.write_text(AGENTS_MD_BLOCK + "\n", encoding="utf-8")
+        installed.append(str(path))
+        return True
+    text = path.read_text(encoding="utf-8")
+    if start in text and end in text:
+        if not force:
+            return False
+        pre, _, rest = text.partition(start)
+        _, _, post = rest.partition(end)
+        path.write_text(pre + AGENTS_MD_BLOCK + post, encoding="utf-8")
+        return True
+    sep = "" if text.endswith("\n") else "\n"
+    path.write_text(text + sep + "\n" + AGENTS_MD_BLOCK + "\n", encoding="utf-8")
+    return True
+
+
+_TARGETS = {"claude": _copy_claude, "cursor": _copy_cursor, "codex": _copy_codex}
+
+
+# --------------------------------------------------------------------------- entry point
+def install(*, ai: str = "claude", target: Path, components: str = "full", with_scripts: bool = True,
             force: bool = False, scaffold: str | None = None, gitignore: bool = True,
             version: str = "0") -> dict:
-    """Vendor the toolkit into `target/.claude/`. Returns a summary dict."""
+    if ai not in _TARGETS:
+        raise SystemExit(f"error: unknown --ai target {ai!r} (choose: {', '.join(_TARGETS)}).")
     payload = payload_root()
-    claude = target / ".claude"
-    de = claude / "de"
-
-    comp_dirs = ["commands", "skills"]
-    if components != "no-agents":
-        comp_dirs.append("agents")
-
     installed: list = []
-    counts: dict = {}
-    for comp in comp_dirs:
-        n_files = _copy_tree(payload / comp, claude / comp,
-                             transform=True, force=force, installed=installed)
-        # commands/agents are one .md each; for skills, report the number of skill directories.
-        counts[comp] = (sum(1 for d in (payload / comp).iterdir() if d.is_dir())
-                        if comp == "skills" else n_files)
-    if with_scripts:
-        counts["scripts"] = _copy_tree(payload / "scripts", de / "scripts",
-                                       transform=True, force=force, installed=installed)
-        _copy_tree(payload / "templates", de / "templates",
-                   transform=True, force=force, installed=installed)
-        _make_executable(de / "scripts")
+    res = _TARGETS[ai](payload, target, components, with_scripts, force, installed)
 
-    de.mkdir(parents=True, exist_ok=True)
-    (de / ".nax.json").write_text(json.dumps({
-        "name": "disciplined-entrepreneurship",
-        "version": version,
-        "components": components,
-        "scripts": with_scripts,
-        "installed": installed,
+    de_dir = res["de_dir"]
+    if with_scripts:
+        res["counts"]["scripts"] = _copy_dir(payload / "scripts", de_dir / "scripts",
+                                             res["prefix"], installed, force)
+        _copy_dir(payload / "templates", de_dir / "templates", res["prefix"], installed, force)
+        _make_executable(de_dir / "scripts")
+
+    de_dir.mkdir(parents=True, exist_ok=True)
+    (de_dir / ".nax.json").write_text(json.dumps({
+        "name": "disciplined-entrepreneurship", "version": version, "ai": ai,
+        "components": components, "scripts": with_scripts, "installed": installed,
         "generator": "nax-cli",
     }, indent=2) + "\n", encoding="utf-8")
 
@@ -149,7 +306,7 @@ def install(*, target: Path, components: str = "full", with_scripts: bool = True
 
     scaffolded = None
     if scaffold and with_scripts:
-        script = de / "scripts" / "new_venture.sh"
+        script = de_dir / "scripts" / "new_venture.sh"
         try:
             subprocess.run(["bash", str(script), scaffold], cwd=str(target), check=True)
             scaffolded = scaffold
@@ -157,10 +314,7 @@ def install(*, target: Path, components: str = "full", with_scripts: bool = True
             print(f"  (could not scaffold venture: {exc})", file=sys.stderr)
 
     return {
-        "target": str(target),
-        "counts": counts,
-        "components": components,
-        "scripts": with_scripts,
-        "gitignore_added": gi_added,
-        "scaffolded": scaffolded,
+        "target": str(target), "ai": ai, "root": res["root"], "counts": res["counts"],
+        "scripts": with_scripts, "gitignore_added": gi_added, "scaffolded": scaffolded,
+        "invoke": res["invoke"], "extra": res["extra"],
     }

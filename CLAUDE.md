@@ -67,16 +67,19 @@ The toolkit ships two ways:
 1. **Plugin** (`plugins/disciplined-entrepreneurship/`, installed via `/plugin`). Components use
    `${CLAUDE_PLUGIN_ROOT}` for script paths. **This is the canonical source of the components.**
 2. **Vendored** via the `nax` CLI (`nax_cli/`): `uvx --from git+…/nax nax init` copies the components
-   into a project's `.claude/` (+ `.claude/de/{scripts,templates}`) for people who want them in their
-   own repo — no plugin needed.
+   into a project for a chosen assistant — `--ai claude` (`.claude/`), `--ai cursor` (`.cursor/`), or
+   `--ai codex` (`.agents/skills/` + `AGENTS.md`), each plus `<root>/de/{scripts,templates}`. No plugin
+   needed.
 
 **Invariant to preserve:** components are authored *once*, for the plugin, using
-`${CLAUDE_PLUGIN_ROOT}/…`. The CLI's single transform rewrites `${CLAUDE_PLUGIN_ROOT}/` →
-`.claude/de/` in vendored `.md`/`.sh`/`.py` files. Therefore: keep using `${CLAUDE_PLUGIN_ROOT}` in
-plugin components (never hardcode `.claude/de/`), and **do not duplicate component files into
-`nax_cli/`** — they are bundled into the wheel at build time via hatchling `force-include`
-(`pyproject.toml`), and the CLI falls back to `plugins/disciplined-entrepreneurship/` when run from a
-clone.
+`${CLAUDE_PLUGIN_ROOT}/…`. The CLI rewrites `${CLAUDE_PLUGIN_ROOT}/` → the target's vendored path
+(`.claude/de/`, `.cursor/de/`, or `.agents/de/`) in vendored `.md`/`.sh`/`.py`; for **Cursor** it also
+strips command frontmatter, and for **Codex** (no project-local commands) it converts commands and
+agents into `SKILL.md` form under `.agents/skills/`. Therefore: keep using `${CLAUDE_PLUGIN_ROOT}` in
+plugin components (never hardcode a vendored path), and **do not duplicate component files into
+`nax_cli/`** — they are bundled into the wheel via hatchling `force-include` (`pyproject.toml`), with a
+`plugins/disciplined-entrepreneurship/` clone fallback. Per-target mapping logic lives in
+`nax_cli/installer.py` (`_copy_claude` / `_copy_cursor` / `_copy_codex`).
 
 ## Conventions you MUST follow when editing
 

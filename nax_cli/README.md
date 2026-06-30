@@ -1,8 +1,9 @@
 # nax-cli
 
 The Spec-Kit-style installer for the Disciplined Entrepreneurship toolkit. It asks a few questions
-and **vendors the commands, agents, skills, scripts, and venture template into a project's `.claude/`
-folder** — the second distribution model alongside the Claude Code plugin.
+and **vendors the commands, agents, skills, scripts, and venture template into a project** for your
+assistant — **Claude Code** (`.claude/`), **Cursor** (`.cursor/`), or **Codex** (`.agents/skills/` +
+`AGENTS.md`) — the second distribution model alongside the Claude Code plugin.
 
 ## Run it
 
@@ -33,9 +34,12 @@ nax init . --here --ai claude --components full --force --yes
 - **Source of truth:** the component tree at `plugins/disciplined-entrepreneurship/`. It is bundled
   into the wheel as `nax_cli/payload/` via hatchling `force-include` (see `pyproject.toml`) — so there
   is **no duplicate copy** in the repo. Clone runs fall back to reading `plugins/...` directly.
-- **The one transform:** vendored `.md` files have `${CLAUDE_PLUGIN_ROOT}/` rewritten to `.claude/de/`
-  (that variable only exists for installed plugins). Scripts/templates are copied verbatim;
-  `new_venture.sh` finds its template via `BASH_SOURCE`, so it works from `.claude/de/scripts/`.
+- **The transform:** `${CLAUDE_PLUGIN_ROOT}/` is rewritten to the target's vendored path
+  (`.claude/de/`, `.cursor/de/`, or `.agents/de/`) — that variable only exists for installed plugins.
+  Cursor commands have their YAML frontmatter stripped; Codex (no project-local commands) converts
+  commands **and** agents into `SKILL.md` files under `.agents/skills/` and writes an `AGENTS.md`
+  overview. `new_venture.sh` finds its template via `BASH_SOURCE`, so it works from
+  `<root>/de/scripts/`.
 - **Non-destructive:** files merge into the user's existing `.claude/`; nothing is deleted, and
   existing files are skipped unless `--force`.
 

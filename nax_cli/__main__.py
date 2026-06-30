@@ -60,11 +60,9 @@ def run_init(args) -> None:
         target = Path(ask("Target project directory", str(Path.cwd()))).expanduser().resolve()
     target.mkdir(parents=True, exist_ok=True)
 
-    # 2) AI assistant (only Claude Code today)
-    ai = args.ai or (ask_choice("AI assistant to install for:", ["claude"], "claude")
+    # 2) AI assistant
+    ai = args.ai or (ask_choice("AI assistant to install for:", ["claude", "cursor", "codex"], "claude")
                      if interactive else "claude")
-    if ai != "claude":
-        sys.exit(f"error: only 'claude' (Claude Code → .claude/) is supported right now (got {ai!r}).")
 
     # 3) Components
     components = args.components or (
@@ -93,33 +91,41 @@ def run_init(args) -> None:
     if scaffold is None and interactive and with_scripts and ask_yesno("Scaffold a first venture now?", False):
         scaffold = ask("  Venture / idea name", "My Idea")
 
-    result = install(target=target, components=components, with_scripts=with_scripts,
+    result = install(ai=ai, target=target, components=components, with_scripts=with_scripts,
                      force=force, scaffold=scaffold, gitignore=gitignore, version=__version__)
     _print_summary(result)
 
 
 def _print_summary(r: dict) -> None:
-    c = r["counts"]
-    parts = [f"commands {c.get('commands', 0)}"]
-    if "agents" in c:
-        parts.append(f"agents {c['agents']}")
-    parts.append(f"skills {c.get('skills', 0)}")
+    c, root, inv = r["counts"], r["root"], r["invoke"]
+    assistant = {"claude": "Claude Code", "cursor": "Cursor", "codex": "Codex CLI"}.get(r["ai"], r["ai"])
+    if r["ai"] == "codex":
+        parts = [f"skills {c.get('skills', 0)}", f"commands→skills {c.get('commands', 0)}"]
+        if c.get("agents"):
+            parts.append(f"agents→skills {c['agents']}")
+    else:
+        parts = [f"commands {c.get('commands', 0)}"]
+        if c.get("agents"):
+            parts.append(f"agents {c['agents']}")
+        parts.append(f"skills {c.get('skills', 0)}")
     if r["scripts"]:
         parts.append(f"scripts {c.get('scripts', 0)}")
     print()
-    print(f"✓ Installed the Disciplined Entrepreneurship toolkit into {r['target']}/.claude")
+    print(f"✓ Installed the Disciplined Entrepreneurship toolkit for {assistant} into {r['target']}/{root}")
     print("  " + " · ".join(parts) + (" · venture template ✓" if r["scripts"] else ""))
+    for note in r.get("extra", []):
+        print(f"  · {note}")
     if r["gitignore_added"]:
         print("  · added /ventures/ to .gitignore")
     if r["scaffolded"]:
         print(f"  · scaffolded a venture under ventures/ ({r['scaffolded']})")
     print("\nNext steps:")
-    print("  1. Open Claude Code in this project.")
-    print('  2. /de-charter "My Idea"   then   /de-next')
+    print(f"  1. Open {assistant} in this project.")
+    print(f'  2. {inv}de-charter "My Idea"   then   {inv}de-next')
     if r["scripts"]:
-        print('     (or scaffold from the shell)  bash .claude/de/scripts/new_venture.sh "My Idea"')
-    print("\nTip: /de-next shows the current phase + next command; /venture-status shows the full board.")
-    if plugin_installed():
+        print(f'     (or scaffold from the shell)  bash {root}/de/scripts/new_venture.sh "My Idea"')
+    print(f"\nTip: {inv}de-next shows the current phase and the next command.")
+    if r["ai"] == "claude" and plugin_installed():
         print("\n⚠  You also have the 'disciplined-entrepreneurship' PLUGIN installed. To avoid")
         print("   duplicate commands, disable it via /plugin — or skip this vendored copy. Use one model.")
 
@@ -135,7 +141,8 @@ def main(argv=None) -> None:
         sp = sub.add_parser(name, help=helptext)
         sp.add_argument("path", nargs="?", default=None, help="target project dir (default: current dir)")
         sp.add_argument("--here", action="store_true", help="install into the current directory")
-        sp.add_argument("--ai", default=None, help="assistant target (claude)")
+        sp.add_argument("--ai", choices=["claude", "cursor", "codex"], default=None,
+                        help="assistant target: claude | cursor | codex")
         sp.add_argument("--components", choices=["full", "no-agents"], default=None,
                         help="full = commands+agents+skills; no-agents = commands+skills")
         sp.add_argument("--scripts", dest="scripts", action="store_true", default=None,
